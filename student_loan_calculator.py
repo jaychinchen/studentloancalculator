@@ -4,15 +4,15 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 def run_simulation(inputs):
-    """Run a single Monte Carlo simulation with given inputs"""
+
     salary = inputs["initial_salary"]
     loan = inputs["current_loan"]
     investment = inputs["current_loan"]
     total_repayments = 0
     leave_years = 0
 
-    for _ in range(inputs["payback_years"]):  # Changed from years to payback_years
-        # Check for child leave
+    for _ in range(inputs["payback_years"]): 
+
         if np.random.rand() < inputs["child_prob"]:
             leave_years += 1
             loan *= 1 + np.random.normal(
@@ -21,7 +21,7 @@ def run_simulation(inputs):
             )
             continue
 
-        # Update salary and loan with growth/interest
+        # update salary and loan with growth/interest
         salary *= 1 + np.random.normal(
             inputs["salary_growth"],
             inputs["salary_growth_sigma"]
@@ -31,7 +31,7 @@ def run_simulation(inputs):
             inputs["loan_rate_sigma"]
         )
 
-        # Calculate loan repayment
+        # calculate loan repayments 
         if salary > inputs["threshold"]:
             payment = (salary - inputs["threshold"]) * inputs["repayment_rate"]
             payment = min(payment, loan)
@@ -41,7 +41,7 @@ def run_simulation(inputs):
         if loan <= 0:
             break
 
-        # Calculate investment returns
+        # calculate investment returns
         investment *= 1 + np.random.normal(
             inputs["investment_rate"],
             inputs["investment_rate_sigma"]
@@ -50,7 +50,6 @@ def run_simulation(inputs):
     return total_repayments, investment
 
 def main():
-    # Set the style for all plots with larger font size
     sns.set_theme(style="whitegrid", font_scale=1.4)
     
     st.title("Student Loan Calculator")
@@ -75,7 +74,6 @@ def main():
         threshold = st.number_input("Repayment Threshold (£)", value=27000, min_value=0)
         repayment_rate = st.number_input("Repayment Rate", value=0.09, min_value=0.0, max_value=1.0, step=0.01)
 
-    # Scenario Parameters
     st.header("Scenario Parameters")
     st.markdown("Configure the simulation parameters for different economic scenarios")
     
@@ -95,7 +93,6 @@ def main():
         child_prob = st.number_input("Probability of Career Break per Year", value=0.1, min_value=0.0, max_value=1.0, step=0.01)
         simulations = st.number_input("Number of Simulations", value=10000, min_value=100, max_value=100000, step=100)
 
-    # Create inputs dictionary
     inputs = {
         "initial_salary": initial_salary,
         "current_loan": current_loan,
@@ -112,10 +109,9 @@ def main():
     }
 
     if st.button("Run Simulation", type="primary"):
-        # Show progress bar
         progress_bar = st.progress(0)
-        
-        # Run simulations
+
+        # run simulations
         results = []
         for i in range(simulations):
             payments, investment = run_simulation(inputs)
@@ -123,12 +119,12 @@ def main():
             if i % 100 == 0:  # Update progress every 100 simulations
                 progress_bar.progress(i / simulations)
         
-        # Convert results to arrays
+        # convert results to arrays
         payments_arr = np.array([p for p, _ in results])
         investments_arr = np.array([i for _, i in results])
         gain_to_pay_early = payments_arr - investments_arr 
 
-        # Display summary statistics
+        # display summary stats
         st.subheader("Results Summary")
         col1, col2 = st.columns(2)
         
@@ -142,12 +138,12 @@ def main():
             st.metric("Median Investment Returns", f"£{np.median(investments_arr):,.2f}")
             st.metric("Probability of Better Returns", f"{(gain_to_pay_early > 0).mean():.1%}")
 
-        # Create and display plots
         st.subheader("Visualisation")
         
-        # Plot 1: Gain/Loss Distribution
+        # plot 1: gain/loss distribution
         fig1, ax1 = plt.subplots(figsize=(12, 7))
-        # Main distribution
+        
+        # main distribution
         sns.histplot(
             data=gain_to_pay_early,
             bins=40,
@@ -157,7 +153,7 @@ def main():
             edgecolor="white",
             linewidth=0.5
         )
-        # Add vertical line at break-even point
+        # vertical line at break-even point
         ax1.axvline(
             0,
             color="#FF2B2B",  # Streamlit red
@@ -165,7 +161,7 @@ def main():
             linewidth=2,
             label="Break-even point"
         )
-        # Add mean line
+        # mean line
         mean_gain = np.mean(gain_to_pay_early)
         ax1.axvline(
             mean_gain,
@@ -174,7 +170,6 @@ def main():
             linewidth=2,
             label=f"Mean: £{mean_gain:,.0f}"
         )
-        # Customize the plot
         ax1.set_title(
             "Expected Returns if Paying Loan Early",
             pad=20,
@@ -188,7 +183,7 @@ def main():
         st.pyplot(fig1)
         plt.close(fig1)
 
-        # Plot 2: Comparison Distribution
+        # plot 2: comparison distribution
         fig2, ax2 = plt.subplots(figsize=(12, 7))
         # Plot the distributions
         sns.histplot(
@@ -211,7 +206,7 @@ def main():
             edgecolor="white",
             linewidth=0.5
         )
-        # Add original loan amount line
+        # add original loan amount line
         ax2.axvline(
             inputs["current_loan"],
             color="#0068C9",  # Streamlit blue
@@ -219,7 +214,6 @@ def main():
             linewidth=2,
             label=f"Original Loan: £{inputs['current_loan']:,}"
         )
-        # Customize the plot
         ax2.set_title(
             "Loan Repayments vs Investment Returns",
             pad=20,
